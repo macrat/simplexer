@@ -17,7 +17,7 @@ import (
 	"github.com/macrat/simplexer"
 )
 
-func main() {
+func Example() {
 	input := "hello_world = \"hello world\"\nnumber = 1"
 	lexer := simplexer.NewLexer(strings.NewReader(input))
 
@@ -34,7 +34,11 @@ func main() {
 			return
 		}
 
-		fmt.Printf("%s: %s\n", token.Type, token.Literal)
+		fmt.Printf("line %2d, column %2d: %s: %s\n",
+			lexer.Position.Line,
+			lexer.Position.Column,
+			token.Type,
+			token.Literal)
 	}
 }
 ```
@@ -45,12 +49,12 @@ It is output as follow.
 hello_world = "hello world"
 number = 1
 ==========
-IDENT: hello_world
-OTHER: =
-STRING: hello world
-IDENT: number
-OTHER: =
-NUMBER: 1
+line  0, column  0: IDENT: hello_world
+line  0, column 12: OTHER: =
+line  0, column 14: STRING: "hello world"
+line  1, column  0: IDENT: number
+line  1, column  7: OTHER: =
+line  1, column  9: NUMBER: 1
 ==========
 ```
 
@@ -65,7 +69,7 @@ import (
 	"regexp"
 	"strings"
 
-	"./simplexer"
+	"github.com/macrat/simplexer"
 )
 
 const (

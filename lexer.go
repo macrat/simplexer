@@ -79,6 +79,12 @@ func (tt TokenType) Compare(another TokenType) int {
 	return tt.ID.Compare(another.ID)
 }
 
+// Position in the file.
+type Position struct {
+	Line   int
+	Column int
+}
+
 /*
 The lexical analyzer.
 
@@ -97,6 +103,8 @@ type Lexer struct {
 	buf        string
 	Whitespace *regexp.Regexp
 	TokenTypes []TokenType
+	Position   Position // Current position in the input.
+	NextPos    Position // Position of next token.
 }
 
 // A data of found Token.
@@ -117,6 +125,28 @@ func NewLexer(reader io.Reader) *Lexer {
 	return l
 }
 
+func (l *Lexer) readBufIfNeed() {
+	if len(l.buf) < 1024 {
+		buf := make([]byte, 2048)
+		l.reader.Read(buf)
+		l.buf += strings.TrimRight(string(buf), "\x00")
+	}
+}
+
+func shiftPos(p Position, s string) Position {
+	lines := strings.Split(s, "\n")
+	lineShift := len(lines) - 1
+
+	if lineShift == 0 {
+		p.Column += len(lines[0])
+	} else {
+		p.Column = len(lines[len(lines)-1])
+	}
+	p.Line += lineShift
+
+	return p
+}
+
 /*
 Mathing buffer with a regular expression.
 
@@ -125,14 +155,25 @@ It won't consume buffer. Please use Lexer.Eat if want consuming.
 Returns submatches.
 */
 func (l *Lexer) Match(re *regexp.Regexp) []string {
-	if len(l.buf) < 1024 {
-		buf := make([]byte, 2048)
-		l.reader.Read(buf)
-		l.buf += strings.TrimRight(string(buf), "\x00")
+	l.readBufIfNeed()
+
+	if m := l.Whitespace.FindString(l.buf); m != "" {
+		l.buf = l.buf[len(m):]
+		l.NextPos = shiftPos(l.NextPos, m)
 	}
 
-	m := re.FindStringSubmatch(l.buf)
-	return m
+	l.readBufIfNeed()
+
+	return re.FindStringSubmatch(l.buf)
+}
+
+func (l *Lexer) consumeBuffer(s string) {
+	if len(s) > 0 {
+		l.buf = l.buf[len(s):]
+
+		l.Position = l.NextPos
+		l.NextPos = shiftPos(l.NextPos, s)
+	}
 }
 
 /*
@@ -144,9 +185,11 @@ Returns submatches.
 */
 func (l *Lexer) Eat(re *regexp.Regexp) []string {
 	match := l.Match(re)
+
 	if len(match) > 0 {
-		l.buf = l.buf[len(match[0]):]
+		l.consumeBuffer(match[0])
 	}
+
 	return match
 }
 
@@ -156,8 +199,6 @@ Peek the first token in the buffer.
 Returns nil as *Token if the buffer is empty.
 */
 func (l *Lexer) Peek() (*Token, error) {
-	l.Eat(l.Whitespace)
-
 	for _, tokenType := range l.TokenTypes {
 		if m := l.Match(tokenType.Re); len(m) > 0 {
 			return &Token{
@@ -184,7 +225,7 @@ func (l *Lexer) Scan() (*Token, error) {
 	t, e := l.Peek()
 
 	if t != nil {
-		l.Eat(t.Type.Re)
+		l.consumeBuffer(t.Literal)
 	}
 
 	return t, e

@@ -6,27 +6,42 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	lexer := NewLexer(strings.NewReader("\t10; literal\n\"abc\""))
+	lexer := NewLexer(strings.NewReader("\t10; literal\nhoge = \"abc\""))
 
 	wants := []struct {
 		TypeID  TokenID
 		Literal string
+		Pos     Position
 	}{
 		{
 			TypeID:  NUMBER,
 			Literal: "10",
+			Pos:     Position{Line: 0, Column: 1},
 		},
 		{
 			TypeID:  OTHER,
 			Literal: ";",
+			Pos:     Position{Line: 0, Column: 3},
 		},
 		{
 			TypeID:  IDENT,
 			Literal: "literal",
+			Pos:     Position{Line: 0, Column: 5},
+		},
+		{
+			TypeID:  IDENT,
+			Literal: "hoge",
+			Pos:     Position{Line: 1, Column: 0},
+		},
+		{
+			TypeID:  OTHER,
+			Literal: "=",
+			Pos:     Position{Line: 1, Column: 5},
 		},
 		{
 			TypeID:  STRING,
 			Literal: "\"abc\"",
+			Pos:     Position{Line: 1, Column: 7},
 		},
 	}
 
@@ -44,6 +59,10 @@ func TestLexer(t *testing.T) {
 		}
 		if token.Literal != except.Literal {
 			t.Errorf("excepted literal %#v but got %#v", except.Literal, token.Literal)
+		}
+
+		if lexer.Position != except.Pos {
+			t.Errorf("excepted position %#v but got %#v", except.Pos, lexer.Position)
 		}
 	}
 
