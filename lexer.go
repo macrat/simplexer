@@ -33,6 +33,7 @@ func (id TokenID) String() string {
 	}
 }
 
+// Compare TokenID as int.
 func (id TokenID) Compare(another TokenID) int {
 	return int(id - another)
 }
@@ -169,9 +170,9 @@ func (l *Lexer) Peek() (*Token, error) {
 
 	if len(l.buf) > 0 {
 		return nil, SyntaxError(l.buf)
-	} else {
-		return nil, nil
 	}
+
+	return nil, nil
 }
 
 /*

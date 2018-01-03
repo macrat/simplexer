@@ -1,6 +1,8 @@
 simplexer
 =========
 
+[![GoDoc](https://godoc.org/github.com/macrat/simplexer?status.svg)](https://godoc.org/github.com/macrat/simplexer)
+
 A simple lexical analyzser for Go.
 
 ## example

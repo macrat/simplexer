@@ -1,4 +1,2 @@
-/*
-A simple lexical analyzer for Go.
-*/
+// A simple lexical analyzer for Go.
 package simplexer
