@@ -2,8 +2,8 @@ package simplexer_test
 
 import (
 	"fmt"
-	"strings"
 	"regexp"
+	"strings"
 
 	"github.com/macrat/simplexer"
 )

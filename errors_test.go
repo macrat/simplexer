@@ -7,6 +7,6 @@ func TestSyntaxError(t *testing.T) {
 	except := "SyntaxError: \"test\""
 
 	if err.Error() != except {
-		t.Errorf("excepted %#v but got %#s", except, err.Error())
+		t.Errorf("excepted %#v but got %s", except, err.Error())
 	}
 }
