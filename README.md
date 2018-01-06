@@ -1,6 +1,9 @@
 simplexer
 =========
 
+[![Build Status](https://travis-ci.org/macrat/simplexer.svg?branch=master)](https://travis-ci.org/macrat/simplexer)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/2208d3ac4fbcdcd2b78a/test_coverage)](https://codeclimate.com/github/macrat/simplexer/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/2208d3ac4fbcdcd2b78a/maintainability)](https://codeclimate.com/github/macrat/simplexer/maintainability)
 [![GoDoc](https://godoc.org/github.com/macrat/simplexer?status.svg)](https://godoc.org/github.com/macrat/simplexer)
 
 A simple lexical analyzser for Go.
