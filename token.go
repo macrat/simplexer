@@ -16,6 +16,11 @@ const (
 	STRING
 )
 
+/*
+Convert to readable string.
+
+Be careful, user added token ID's will convert to UNKNOWN.
+*/
 func (id TokenID) String() string {
 	switch id {
 	case OTHER:
@@ -56,6 +61,7 @@ func NewTokenType(token TokenID, re string) TokenType {
 	}
 }
 
+// Get readable string of TokenID.
 func (tt TokenType) String() string {
 	return tt.ID.String()
 }

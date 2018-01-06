@@ -18,12 +18,6 @@ var (
 	}
 )
 
-// Position in the file.
-type Position struct {
-	Line   int
-	Column int
-}
-
 /*
 The lexical analyzer.
 
