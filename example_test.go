@@ -3,6 +3,7 @@ package simplexer_test
 import (
 	"fmt"
 	"strings"
+	"regexp"
 
 	"github.com/macrat/simplexer"
 )
@@ -44,7 +45,7 @@ func Example() {
 	// ==========
 }
 
-func ExampleGetLastLine() {
+func Example_positionInformation() {
 	input := "this is a\ntest string\n"
 	lexer := simplexer.NewLexer(strings.NewReader(input))
 
@@ -57,57 +58,71 @@ func ExampleGetLastLine() {
 			break
 		}
 
-		fmt.Println(lexer.GetLastLine())
-		fmt.Printf("%s%s\n\n",
+		fmt.Printf("%d: %s\n", lexer.Position.Line, lexer.GetLastLine())
+		fmt.Printf(" | %s%s\n\n",
 			strings.Repeat(" ", lexer.Position.Column),
 			strings.Repeat("=", len(token.Literal)))
 	}
 
 	// Output:
-	// this is a
-	// ====
+	// 0: this is a
+	//  | ====
 	//
-	// this is a
-	//      ==
+	// 0: this is a
+	//  |      ==
 	//
-	// this is a
-	//         =
+	// 0: this is a
+	//  |         =
 	//
-	// test string
-	// ====
+	// 1: test string
+	//  | ====
 	//
-	// test string
-	//      ======
+	// 1: test string
+	//  |      ======
 }
 
-func ExampleNewTokenType() {
-	number := simplexer.TokenID(0)
-	others := simplexer.TokenID(1)
+func Example_addOriginalTokenType() {
+	const (
+		SUBSITUATION simplexer.TokenID = iota
+		NEWLINE
+	)
 
-	lexer := simplexer.NewLexer(strings.NewReader("123this is test456"))
+	input := "hello_world = \"hello world\"\nnumber = 1"
+	lexer := simplexer.NewLexer(strings.NewReader(input))
 
-	lexer.TokenTypes = []simplexer.TokenType{
-		simplexer.NewTokenType(number, `^[0-9]+`),
-		simplexer.NewTokenType(others, `^[^0-9]+`),
-	}
+	lexer.Whitespace = regexp.MustCompile(`^[\t ]`)
+
+	lexer.TokenTypes = append([]simplexer.TokenType{
+		simplexer.NewTokenType(SUBSITUATION, `^=`),
+		simplexer.NewTokenType(NEWLINE, `^[\n\r]+`),
+	}, lexer.TokenTypes...)
+
+	fmt.Println(input)
+	fmt.Println("==========")
 
 	for {
-		token, _ := lexer.Scan()
+		token, err := lexer.Scan()
+		if err != nil {
+			panic(err.Error())
+		}
 		if token == nil {
-			break
+			fmt.Println("==========")
+			return
 		}
 
-		if token.Type.ID == number {
-			fmt.Printf("%s is number\n", token.Literal)
-		}
-
-		if token.Type.ID == others {
-			fmt.Printf("%s is not number\n", token.Literal)
-		}
+		fmt.Printf("%s: %#v\n", token.Type, token.Literal)
 	}
 
 	// Output:
-	// 123 is number
-	// this is test is not number
-	// 456 is number
+	// hello_world = "hello world"
+	// number = 1
+	// ==========
+	// IDENT: "hello_world"
+	// UNKNOWN(0): "="
+	// STRING: "\"hello world\""
+	// UNKNOWN(1): "\n"
+	// IDENT: "number"
+	// UNKNOWN(0): "="
+	// NUMBER: "1"
+	// ==========
 }
