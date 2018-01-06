@@ -3,40 +3,8 @@ package simplexer
 import (
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 )
-
-// TokenID is Identifier for TokenType.
-type TokenID int
-
-// Default token IDs.
-const (
-	OTHER TokenID = -(iota + 1)
-	IDENT
-	NUMBER
-	STRING
-)
-
-func (id TokenID) String() string {
-	switch id {
-	case OTHER:
-		return "OTHER"
-	case IDENT:
-		return "IDENT"
-	case NUMBER:
-		return "NUMBER"
-	case STRING:
-		return "STRING"
-	default:
-		return "UNKNOWN(" + strconv.Itoa(int(id)) + ")"
-	}
-}
-
-// Compare TokenID as int.
-func (id TokenID) Compare(another TokenID) int {
-	return int(id - another)
-}
 
 // Defined default values for properties of Lexer as a package value.
 var (
@@ -49,35 +17,6 @@ var (
 		NewTokenType(OTHER, `^.`),
 	}
 )
-
-// TokenType is a rule for making Token.
-type TokenType struct {
-	ID TokenID
-	Re *regexp.Regexp // Regular expression for taking token. Must be starts with ^.
-}
-
-/*
-Make new TokenType.
-
-token: A TokenID of new TokenType.
-
-re: A regular expression of token. Must be starts with ^.
-*/
-func NewTokenType(token TokenID, re string) TokenType {
-	return TokenType{
-		ID: token,
-		Re: regexp.MustCompile(re),
-	}
-}
-
-func (tt TokenType) String() string {
-	return tt.ID.String()
-}
-
-// Compare TokenType of ID.
-func (tt TokenType) Compare(another TokenType) int {
-	return tt.ID.Compare(another.ID)
-}
 
 // Position in the file.
 type Position struct {
@@ -101,17 +40,11 @@ Because OTHER will accept any single character.
 type Lexer struct {
 	reader     io.Reader
 	buf        string
+	loadedLine string
 	Whitespace *regexp.Regexp
 	TokenTypes []TokenType
 	Position   Position // Current position in the input.
 	NextPos    Position // Position of next token.
-}
-
-// A data of found Token.
-type Token struct {
-	Type       *TokenType
-	Literal    string   // The string of matched.
-	Submatches []string // Submatches of regular expression.
 }
 
 // Make a new Lexer.
@@ -158,8 +91,7 @@ func (l *Lexer) Match(re *regexp.Regexp) []string {
 	l.readBufIfNeed()
 
 	if m := l.Whitespace.FindString(l.buf); m != "" {
-		l.buf = l.buf[len(m):]
-		l.NextPos = shiftPos(l.NextPos, m)
+		l.consumeBuffer(m, false)
 	}
 
 	l.readBufIfNeed()
@@ -167,12 +99,20 @@ func (l *Lexer) Match(re *regexp.Regexp) []string {
 	return re.FindStringSubmatch(l.buf)
 }
 
-func (l *Lexer) consumeBuffer(s string) {
+func (l *Lexer) consumeBuffer(s string, isToken bool) {
 	if len(s) > 0 {
 		l.buf = l.buf[len(s):]
 
-		l.Position = l.NextPos
+		if isToken {
+			l.Position = l.NextPos
+		}
 		l.NextPos = shiftPos(l.NextPos, s)
+
+		if idx := strings.LastIndex(s, "\n"); idx >= 0 {
+			l.loadedLine = s[idx+1:]
+		} else {
+			l.loadedLine += s
+		}
 	}
 }
 
@@ -187,7 +127,7 @@ func (l *Lexer) Eat(re *regexp.Regexp) []string {
 	match := l.Match(re)
 
 	if len(match) > 0 {
-		l.consumeBuffer(match[0])
+		l.consumeBuffer(match[0], true)
 	}
 
 	return match
@@ -225,8 +165,16 @@ func (l *Lexer) Scan() (*Token, error) {
 	t, e := l.Peek()
 
 	if t != nil {
-		l.consumeBuffer(t.Literal)
+		l.consumeBuffer(t.Literal, true)
 	}
 
 	return t, e
+}
+
+/*
+GetCurrentLine returns line of last scanned token.
+*/
+func (l *Lexer) GetLastLine() string {
+	l.readBufIfNeed()
+	return l.loadedLine + l.buf[:strings.Index(l.buf, "\n")]
 }

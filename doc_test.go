@@ -43,3 +43,39 @@ func Example() {
 	// line  1, column  9: NUMBER: 1
 	// ==========
 }
+
+func ExampleGetLastLine() {
+	input := "this is a\ntest string\n"
+	lexer := simplexer.NewLexer(strings.NewReader(input))
+
+	for {
+		token, err := lexer.Scan()
+		if err != nil {
+			panic(err.Error())
+		}
+		if token == nil {
+			break
+		}
+
+		fmt.Println(lexer.GetLastLine())
+		fmt.Printf("%s%s\n\n",
+			strings.Repeat(" ", lexer.Position.Column),
+			strings.Repeat("=", len(token.Literal)))
+	}
+
+	// Output:
+	// this is a
+	// ====
+	//
+	// this is a
+	//      ==
+	//
+	// this is a
+	//         =
+	//
+	// test string
+	// ====
+	//
+	// test string
+	//      ======
+}
