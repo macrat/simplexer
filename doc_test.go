@@ -79,3 +79,35 @@ func ExampleGetLastLine() {
 	// test string
 	//      ======
 }
+
+func ExampleNewTokenType() {
+	number := simplexer.TokenID(0)
+	others := simplexer.TokenID(1)
+
+	lexer := simplexer.NewLexer(strings.NewReader("123this is test456"))
+
+	lexer.TokenTypes = []simplexer.TokenType{
+		simplexer.NewTokenType(number, `^[0-9]+`),
+		simplexer.NewTokenType(others, `^[^0-9]+`),
+	}
+
+	for {
+		token, _ := lexer.Scan()
+		if token == nil {
+			break
+		}
+
+		if token.Type.ID == number {
+			fmt.Printf("%s is number\n", token.Literal)
+		}
+
+		if token.Type.ID == others {
+			fmt.Printf("%s is not number\n", token.Literal)
+		}
+	}
+
+	// Output:
+	// 123 is number
+	// this is test is not number
+	// 456 is number
+}

@@ -84,8 +84,8 @@ func main() {
 	lexer.Whitespace = regexp.MustCompile(`^[\t ]`)
 
 	lexer.TokenTypes = append([]simplexer.TokenType{
-		simplexer.NewTokenType(SUBSITUATION, `^=`, 0),
-		simplexer.NewTokenType(NEWLINE, `^[\n\r]+`, 0),
+		simplexer.NewTokenType(SUBSITUATION, `^=`),
+		simplexer.NewTokenType(NEWLINE, `^[\n\r]+`),
 	}, lexer.TokenTypes...)
 
 	fmt.Println(input)
