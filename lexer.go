@@ -35,10 +35,9 @@ type Lexer struct {
 	reader     io.Reader
 	buf        string
 	loadedLine string
+	nextPos    Position
 	Whitespace *regexp.Regexp
 	TokenTypes []TokenType
-	Position   Position // Current position in the input.
-	NextPos    Position // Position of next token.
 }
 
 // Make a new Lexer.
@@ -60,20 +59,6 @@ func (l *Lexer) readBufIfNeed() {
 	}
 }
 
-func shiftPos(p Position, s string) Position {
-	lines := strings.Split(s, "\n")
-	lineShift := len(lines) - 1
-
-	if lineShift == 0 {
-		p.Column += len(lines[0])
-	} else {
-		p.Column = len(lines[len(lines)-1])
-	}
-	p.Line += lineShift
-
-	return p
-}
-
 /*
 Mathing buffer with a regular expression.
 
@@ -83,7 +68,7 @@ func (l *Lexer) Match(re *regexp.Regexp) []string {
 	l.readBufIfNeed()
 
 	if m := l.Whitespace.FindString(l.buf); m != "" {
-		l.consumeWhitespace(m)
+		l.consumeBuffer(m)
 	}
 
 	l.readBufIfNeed()
@@ -91,10 +76,10 @@ func (l *Lexer) Match(re *regexp.Regexp) []string {
 	return re.FindStringSubmatch(l.buf)
 }
 
-func (l *Lexer) consumeWhitespace(s string) {
+func (l *Lexer) consumeBuffer(s string) {
 	l.buf = l.buf[len(s):]
 
-	l.NextPos = shiftPos(l.NextPos, s)
+	l.nextPos = shiftPos(l.nextPos, s)
 
 	if idx := strings.LastIndex(s, "\n"); idx >= 0 {
 		l.loadedLine = s[idx+1:]
@@ -103,17 +88,12 @@ func (l *Lexer) consumeWhitespace(s string) {
 	}
 }
 
-func (l *Lexer) consumeToken(s string) {
-	l.Position = l.NextPos
-	l.consumeWhitespace(s)
-}
-
 func (l *Lexer) makeError() error {
 	for i, _ := range l.buf {
 		if l.Whitespace.MatchString(l.buf[i:]) {
 			return UnknownTokenError{
 				Literal:  l.buf[:i],
-				Position: l.NextPos,
+				Position: l.nextPos,
 			}
 		}
 
@@ -121,7 +101,7 @@ func (l *Lexer) makeError() error {
 			if tokenType.Re.MatchString(l.buf[i:]) {
 				return UnknownTokenError{
 					Literal:  l.buf[:i],
-					Position: l.NextPos,
+					Position: l.nextPos,
 				}
 			}
 		}
@@ -129,7 +109,7 @@ func (l *Lexer) makeError() error {
 
 	return UnknownTokenError{
 		Literal:  l.buf,
-		Position: l.NextPos,
+		Position: l.nextPos,
 	}
 }
 
@@ -145,6 +125,7 @@ func (l *Lexer) Peek() (*Token, error) {
 				Type:       &tokenType,
 				Literal:    m[0],
 				Submatches: m[1:],
+				Position:   l.nextPos,
 			}, nil
 		}
 	}
@@ -165,7 +146,7 @@ func (l *Lexer) Scan() (*Token, error) {
 	t, e := l.Peek()
 
 	if t != nil {
-		l.consumeToken(t.Literal)
+		l.consumeBuffer(t.Literal)
 	}
 
 	return t, e

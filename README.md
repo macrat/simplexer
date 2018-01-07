@@ -38,8 +38,8 @@ func Example() {
 		}
 
 		fmt.Printf("line %2d, column %2d: %s: %s\n",
-			lexer.Position.Line,
-			lexer.Position.Column,
+			token.Position.Line,
+			token.Position.Column,
 			token.Type,
 			token.Literal)
 	}

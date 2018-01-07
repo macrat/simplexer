@@ -76,4 +76,5 @@ type Token struct {
 	Type       *TokenType
 	Literal    string   // The string of matched.
 	Submatches []string // Submatches of regular expression.
+	Position   Position // Position of token.
 }

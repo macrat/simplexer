@@ -26,8 +26,8 @@ func Example() {
 		}
 
 		fmt.Printf("line %2d, column %2d: %s: %s\n",
-			lexer.Position.Line,
-			lexer.Position.Column,
+			token.Position.Line,
+			token.Position.Column,
 			token.Type,
 			token.Literal)
 	}
@@ -58,9 +58,9 @@ func Example_positionInformation() {
 			break
 		}
 
-		fmt.Printf("%d: %s\n", lexer.Position.Line, lexer.GetLastLine())
+		fmt.Printf("%d: %s\n", token.Position.Line, lexer.GetLastLine())
 		fmt.Printf(" | %s%s\n\n",
-			strings.Repeat(" ", lexer.Position.Column),
+			strings.Repeat(" ", token.Position.Column),
 			strings.Repeat("=", len(token.Literal)))
 	}
 

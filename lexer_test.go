@@ -33,8 +33,8 @@ func execute(t *testing.T, input string, wants []want) {
 			t.Errorf("excepted literal %#v but got %#v", except.Literal, token.Literal)
 		}
 
-		if lexer.Position != except.Pos {
-			t.Errorf("excepted position %#v but got %#v", except.Pos, lexer.Position)
+		if token.Position != except.Pos {
+			t.Errorf("excepted position %#v but got %#v", except.Pos, token.Position)
 		}
 
 		if lexer.GetLastLine() != except.LastLine {
