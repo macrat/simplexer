@@ -156,3 +156,81 @@ func TestLexer_reportingError(t *testing.T) {
 		t.Errorf("literal of error excepts %s but got %s", exceptLiteral, err.Literal)
 	}
 }
+
+func TestLexer_reportingError_withoutSpace(t *testing.T) {
+	lexer := simplexer.NewLexer(strings.NewReader("1 2 error3 4"))
+	lexer.TokenTypes = []simplexer.TokenType{
+		simplexer.NewTokenType(0, `^[0-9]+`),
+	}
+
+	if token, err := lexer.Scan(); err != nil {
+		t.Fatalf("%s", err.Error())
+	} else if token.Literal != "1" {
+		t.Fatalf("except 1 but got %s", token.Literal)
+	}
+
+	if token, err := lexer.Scan(); err != nil {
+		t.Fatalf("%s", err.Error())
+	} else if token.Literal != "2" {
+		t.Fatalf("except 2 but got %s", token.Literal)
+	}
+
+	token, e := lexer.Scan()
+	if e == nil {
+		t.Fatalf("except error but got nil")
+	}
+	if token != nil {
+		t.Errorf("token when error except nil but got %s", token)
+	}
+
+	err, ok := e.(simplexer.UnknownTokenError)
+	if !ok {
+		t.Fatalf("except UnknownTokenError but got other error")
+	}
+
+	exceptPos := simplexer.Position{Line: 0, Column: 4}
+	if err.Position != exceptPos {
+		t.Errorf("position of error excepts %v but got %v", exceptPos, err.Position)
+	}
+
+	exceptLiteral := "error"
+	if err.Literal != exceptLiteral {
+		t.Errorf("literal of error excepts %s but got %s", exceptLiteral, err.Literal)
+	}
+}
+
+func TestLexer_reportingError_atLast(t *testing.T) {
+	lexer := simplexer.NewLexer(strings.NewReader("12error"))
+	lexer.TokenTypes = []simplexer.TokenType{
+		simplexer.NewTokenType(0, `^[0-9]+`),
+	}
+
+	if token, err := lexer.Scan(); err != nil {
+		t.Fatalf("%s", err.Error())
+	} else if token.Literal != "12" {
+		t.Fatalf("except 12 but got %s", token.Literal)
+	}
+
+	token, e := lexer.Scan()
+	if e == nil {
+		t.Fatalf("except error but got nil")
+	}
+	if token != nil {
+		t.Errorf("token when error except nil but got %s", token)
+	}
+
+	err, ok := e.(simplexer.UnknownTokenError)
+	if !ok {
+		t.Fatalf("except UnknownTokenError but got other error")
+	}
+
+	exceptPos := simplexer.Position{Line: 0, Column: 2}
+	if err.Position != exceptPos {
+		t.Errorf("position of error excepts %v but got %v", exceptPos, err.Position)
+	}
+
+	exceptLiteral := "error"
+	if err.Literal != exceptLiteral {
+		t.Errorf("literal of error excepts %s but got %s", exceptLiteral, err.Literal)
+	}
+}
