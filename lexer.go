@@ -77,15 +77,13 @@ func shiftPos(p Position, s string) Position {
 /*
 Mathing buffer with a regular expression.
 
-It won't consume buffer. Please use Lexer.Eat if want consuming.
-
 Returns submatches.
 */
 func (l *Lexer) Match(re *regexp.Regexp) []string {
 	l.readBufIfNeed()
 
 	if m := l.Whitespace.FindString(l.buf); m != "" {
-		l.consumeBuffer(m, false)
+		l.consumeWhitespace(m)
 	}
 
 	l.readBufIfNeed()
@@ -93,38 +91,21 @@ func (l *Lexer) Match(re *regexp.Regexp) []string {
 	return re.FindStringSubmatch(l.buf)
 }
 
-func (l *Lexer) consumeBuffer(s string, isToken bool) {
-	if len(s) > 0 {
-		l.buf = l.buf[len(s):]
+func (l *Lexer) consumeWhitespace(s string) {
+	l.buf = l.buf[len(s):]
 
-		if isToken {
-			l.Position = l.NextPos
-		}
-		l.NextPos = shiftPos(l.NextPos, s)
+	l.NextPos = shiftPos(l.NextPos, s)
 
-		if idx := strings.LastIndex(s, "\n"); idx >= 0 {
-			l.loadedLine = s[idx+1:]
-		} else {
-			l.loadedLine += s
-		}
+	if idx := strings.LastIndex(s, "\n"); idx >= 0 {
+		l.loadedLine = s[idx+1:]
+	} else {
+		l.loadedLine += s
 	}
 }
 
-/*
-Matching buffer with a regular expression, and consume buffer if matched.
-
-If don't want consume buffer, please use Lexer.Match.
-
-Returns submatches.
-*/
-func (l *Lexer) Eat(re *regexp.Regexp) []string {
-	match := l.Match(re)
-
-	if len(match) > 0 {
-		l.consumeBuffer(match[0], true)
-	}
-
-	return match
+func (l *Lexer) consumeToken(s string) {
+	l.Position = l.NextPos
+	l.consumeWhitespace(s)
 }
 
 func (l *Lexer) makeError() error {
@@ -184,7 +165,7 @@ func (l *Lexer) Scan() (*Token, error) {
 	t, e := l.Peek()
 
 	if t != nil {
-		l.consumeBuffer(t.Literal, true)
+		l.consumeToken(t.Literal)
 	}
 
 	return t, e
