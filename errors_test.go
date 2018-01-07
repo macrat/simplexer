@@ -6,9 +6,9 @@ import (
 	"github.com/macrat/simplexer"
 )
 
-func TestSyntaxError(t *testing.T) {
-	err := simplexer.SyntaxError("test")
-	except := "SyntaxError: \"test\""
+func TestUnknownTokenError(t *testing.T) {
+	err := simplexer.UnknownTokenError{Literal: "test", Position: simplexer.Position{Line: 0, Column: 1}}
+	except := "1:2:UnknownTokenError: \"test\""
 
 	if err.Error() != except {
 		t.Errorf("excepted %#v but got %s", except, err.Error())

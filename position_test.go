@@ -23,30 +23,30 @@ func TestPositionCompare(t *testing.T) {
 	c := simplexer.Position{Line: 1, Column: 3}
 
 	if a != a2 {
-		t.Errorf("Position reports %s != %s", a, a2)
+		t.Errorf("Position reports %v != %v", a, a2)
 	}
 
 	if !a.Before(b) {
-		t.Errorf("Position reports %s is not before of %s", a, b)
+		t.Errorf("Position reports %v is not before of %v", a, b)
 	}
 
 	if !a.Before(c) {
-		t.Errorf("Position reports %s is not before of %s", a, c)
+		t.Errorf("Position reports %v is not before of %v", a, c)
 	}
 
 	if !b.Before(c) {
-		t.Errorf("Position reports %s is not before of %s", b, c)
+		t.Errorf("Position reports %v is not before of %v", b, c)
 	}
 
 	if !b.After(a) {
-		t.Errorf("Position reports %s is not after of %s", b, a)
+		t.Errorf("Position reports %v is not after of %v", b, a)
 	}
 
 	if !c.After(a) {
-		t.Errorf("Position reports %s is not after of %s", c, a)
+		t.Errorf("Position reports %v is not after of %v", c, a)
 	}
 
 	if !c.After(b) {
-		t.Errorf("Position reports %s is not after of %s", c, b)
+		t.Errorf("Position reports %v is not after of %v", c, b)
 	}
 }

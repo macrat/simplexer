@@ -127,6 +127,31 @@ func (l *Lexer) Eat(re *regexp.Regexp) []string {
 	return match
 }
 
+func (l *Lexer) makeError() error {
+	for i, _ := range l.buf {
+		if l.Whitespace.MatchString(l.buf[i:]) {
+			return UnknownTokenError{
+				Literal:  l.buf[:i],
+				Position: l.NextPos,
+			}
+		}
+
+		for _, tokenType := range l.TokenTypes {
+			if tokenType.Re.MatchString(l.buf[i:]) {
+				return UnknownTokenError{
+					Literal:  l.buf[:i],
+					Position: l.NextPos,
+				}
+			}
+		}
+	}
+
+	return UnknownTokenError{
+		Literal:  l.buf,
+		Position: l.NextPos,
+	}
+}
+
 /*
 Peek the first token in the buffer.
 
@@ -144,7 +169,7 @@ func (l *Lexer) Peek() (*Token, error) {
 	}
 
 	if len(l.buf) > 0 {
-		return nil, SyntaxError(l.buf)
+		return nil, l.makeError()
 	}
 
 	return nil, nil
