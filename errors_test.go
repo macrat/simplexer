@@ -1,9 +1,13 @@
-package simplexer
+package simplexer_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/macrat/simplexer"
+)
 
 func TestSyntaxError(t *testing.T) {
-	err := SyntaxError("test")
+	err := simplexer.SyntaxError("test")
 	except := "SyntaxError: \"test\""
 
 	if err.Error() != except {

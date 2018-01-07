@@ -1,49 +1,21 @@
-package simplexer
+package simplexer_test
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/macrat/simplexer"
 )
 
-func TestLexer(t *testing.T) {
-	lexer := NewLexer(strings.NewReader("\t10; literal\nhoge = \"abc\""))
+type want struct {
+	TypeID   simplexer.TokenID
+	Literal  string
+	Pos      simplexer.Position
+	LastLine string
+}
 
-	wants := []struct {
-		TypeID  TokenID
-		Literal string
-		Pos     Position
-	}{
-		{
-			TypeID:  NUMBER,
-			Literal: "10",
-			Pos:     Position{Line: 0, Column: 1},
-		},
-		{
-			TypeID:  OTHER,
-			Literal: ";",
-			Pos:     Position{Line: 0, Column: 3},
-		},
-		{
-			TypeID:  IDENT,
-			Literal: "literal",
-			Pos:     Position{Line: 0, Column: 5},
-		},
-		{
-			TypeID:  IDENT,
-			Literal: "hoge",
-			Pos:     Position{Line: 1, Column: 0},
-		},
-		{
-			TypeID:  OTHER,
-			Literal: "=",
-			Pos:     Position{Line: 1, Column: 5},
-		},
-		{
-			TypeID:  STRING,
-			Literal: "\"abc\"",
-			Pos:     Position{Line: 1, Column: 7},
-		},
-	}
+func execute(t *testing.T, input string, wants []want) {
+	lexer := simplexer.NewLexer(strings.NewReader(input))
 
 	for _, except := range wants {
 		token, err := lexer.Scan()
@@ -64,6 +36,10 @@ func TestLexer(t *testing.T) {
 		if lexer.Position != except.Pos {
 			t.Errorf("excepted position %#v but got %#v", except.Pos, lexer.Position)
 		}
+
+		if lexer.GetLastLine() != except.LastLine {
+			t.Errorf("excepted last line %#v but got %#v", except.LastLine, lexer.GetLastLine())
+		}
 	}
 
 	token, err := lexer.Scan()
@@ -73,4 +49,68 @@ func TestLexer(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
+}
+
+func TestLexer(t *testing.T) {
+	execute(t, "\t10; literal\nhoge = \"abc\"", []want{
+		{
+			TypeID:   simplexer.NUMBER,
+			Literal:  "10",
+			Pos:      simplexer.Position{Line: 0, Column: 1},
+			LastLine: "\t10; literal",
+		},
+		{
+			TypeID:   simplexer.OTHER,
+			Literal:  ";",
+			Pos:      simplexer.Position{Line: 0, Column: 3},
+			LastLine: "\t10; literal",
+		},
+		{
+			TypeID:   simplexer.IDENT,
+			Literal:  "literal",
+			Pos:      simplexer.Position{Line: 0, Column: 5},
+			LastLine: "\t10; literal",
+		},
+		{
+			TypeID:   simplexer.IDENT,
+			Literal:  "hoge",
+			Pos:      simplexer.Position{Line: 1, Column: 0},
+			LastLine: "hoge = \"abc\"",
+		},
+		{
+			TypeID:   simplexer.OTHER,
+			Literal:  "=",
+			Pos:      simplexer.Position{Line: 1, Column: 5},
+			LastLine: "hoge = \"abc\"",
+		},
+		{
+			TypeID:   simplexer.STRING,
+			Literal:  "\"abc\"",
+			Pos:      simplexer.Position{Line: 1, Column: 7},
+			LastLine: "hoge = \"abc\"",
+		},
+	})
+}
+
+func TestLexer_oneLine(t *testing.T) {
+	execute(t, "this is \"one line\"", []want{
+		{
+			TypeID:   simplexer.IDENT,
+			Literal:  "this",
+			Pos:      simplexer.Position{Line: 0, Column: 0},
+			LastLine: "this is \"one line\"",
+		},
+		{
+			TypeID:   simplexer.IDENT,
+			Literal:  "is",
+			Pos:      simplexer.Position{Line: 0, Column: 5},
+			LastLine: "this is \"one line\"",
+		},
+		{
+			TypeID:   simplexer.STRING,
+			Literal:  "\"one line\"",
+			Pos:      simplexer.Position{Line: 0, Column: 8},
+			LastLine: "this is \"one line\"",
+		},
+	})
 }

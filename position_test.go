@@ -1,22 +1,26 @@
-package simplexer
+package simplexer_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/macrat/simplexer"
+)
 
 func TestPositionString(t *testing.T) {
-	if s := (Position{Line: 0, Column: 1}).String(); s != "[line:0, column:1]" {
+	if s := (simplexer.Position{Line: 0, Column: 1}).String(); s != "[line:0, column:1]" {
 		t.Errorf("failed convert to string: excepted [line:0, column:1] but got %#v", s)
 	}
 
-	if s := (Position{Line: 5, Column: 3}).String(); s != "[line:5, column:3]" {
+	if s := (simplexer.Position{Line: 5, Column: 3}).String(); s != "[line:5, column:3]" {
 		t.Errorf("failed convert to string: excepted [line:5, column:3] but got %#v", s)
 	}
 }
 
 func TestPositionCompare(t *testing.T) {
-	a := Position{Line: 0, Column: 0}
-	a2 := Position{Line: 0, Column: 0}
-	b := Position{Line: 0, Column: 5}
-	c := Position{Line: 1, Column: 3}
+	a := simplexer.Position{Line: 0, Column: 0}
+	a2 := simplexer.Position{Line: 0, Column: 0}
+	b := simplexer.Position{Line: 0, Column: 5}
+	c := simplexer.Position{Line: 1, Column: 3}
 
 	if a != a2 {
 		t.Errorf("Position reports %s != %s", a, a2)

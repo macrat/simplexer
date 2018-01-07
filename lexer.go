@@ -170,5 +170,10 @@ GetCurrentLine returns line of last scanned token.
 */
 func (l *Lexer) GetLastLine() string {
 	l.readBufIfNeed()
-	return l.loadedLine + l.buf[:strings.Index(l.buf, "\n")]
+
+	if idx := strings.Index(l.buf, "\n"); idx >= 0 {
+		return l.loadedLine + l.buf[:strings.Index(l.buf, "\n")]
+	} else {
+		return l.loadedLine + l.buf
+	}
 }
