@@ -72,7 +72,7 @@ re is a regular expression of token.
 */
 func NewRegexpTokenType(id TokenID, re string) *RegexpTokenType {
 	if !strings.HasPrefix(re, "^") {
-		re = "^" + re
+		re = "^(?:" + re + ")"
 	}
 	return &RegexpTokenType{
 		ID: id,
