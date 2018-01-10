@@ -7,7 +7,7 @@ import (
 
 // Defined default values for properties of Lexer as a package value.
 var (
-	DefaultWhitespace = NewRegexpTokenType(-1, `(?:\s|\r|\n)+`)
+	DefaultWhitespace = NewPatternTokenType(-1, []string{" ", "\t", "\r", "\n"})
 
 	DefaultTokenTypes = []TokenType{
 		NewRegexpTokenType(IDENT, `[a-zA-Z_][a-zA-Z0-9_]*`),
