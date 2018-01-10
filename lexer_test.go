@@ -234,3 +234,57 @@ func TestLexer_reportingError_atLast(t *testing.T) {
 		t.Errorf("literal of error excepts %s but got %s", exceptLiteral, err.Literal)
 	}
 }
+
+func TestLexer_Whitespace(t *testing.T) {
+	lexer := simplexer.NewLexer(strings.NewReader("\ta---b c"))
+
+	lexer.Whitespace = simplexer.NewRegexpTokenType(0, `[\s\t\r\n]+`)
+
+	tok, err := lexer.Scan()
+	if err != nil {
+		t.Fatalf("failed scan: %s", err.Error())
+	}
+	if tok == nil {
+		t.Fatalf("failed scan, Lexer returned nil")
+	}
+	if tok.Literal != "a" {
+		t.Errorf("excepted \"a\" but got %#v", tok.Literal)
+	}
+
+	lexer.Whitespace = simplexer.NewPatternTokenType(0, []string{"-"})
+
+	tok, err = lexer.Scan()
+	if err != nil {
+		t.Fatalf("failed scan: %s", err.Error())
+	}
+	if tok == nil {
+		t.Fatalf("failed scan, Lexer returned nil")
+	}
+	if tok.Literal != "b" {
+		t.Errorf("excepted \"b\" but got %#v", tok.Literal)
+	}
+
+	lexer.Whitespace = nil
+
+	tok, err = lexer.Scan()
+	if err != nil {
+		t.Fatalf("failed scan: %s", err.Error())
+	}
+	if tok == nil {
+		t.Fatalf("failed scan, Lexer returned nil")
+	}
+	if tok.Literal != " " {
+		t.Errorf("excepted \" \" but got %#v", tok.Literal)
+	}
+
+	tok, err = lexer.Scan()
+	if err != nil {
+		t.Fatalf("failed scan: %s", err.Error())
+	}
+	if tok == nil {
+		t.Fatalf("failed scan, Lexer returned nil")
+	}
+	if tok.Literal != "c" {
+		t.Errorf("excepted \"c\" but got %#v", tok.Literal)
+	}
+}

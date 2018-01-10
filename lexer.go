@@ -22,6 +22,7 @@ The lexical analyzer.
 
 Whitespace is a TokenType for skipping characters like whitespaces.
 The default value is simplexer.DefaultWhitespace.
+Won't skip any characters if Whitespace is nil.
 
 TokenTypes is an array of TokenType.
 Lexer will sequential check TokenTypes, and return first matched token.
@@ -75,6 +76,10 @@ func (l *Lexer) consumeBuffer(t *Token) {
 }
 
 func (l *Lexer) skipWhitespace() {
+	if l.Whitespace == nil {
+		return
+	}
+
 	for true {
 		l.readBufIfNeed()
 
@@ -88,7 +93,14 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) makeError() error {
 	for shift, _ := range l.buf {
-		for _, tokenType := range append([]TokenType{l.Whitespace}, l.TokenTypes...) {
+		if l.Whitespace != nil && l.Whitespace.FindToken(l.buf[shift:], l.nextPos) != nil {
+			return UnknownTokenError{
+				Literal:  l.buf[:shift],
+				Position: l.nextPos,
+			}
+		}
+
+		for _, tokenType := range l.TokenTypes {
 			if tokenType.FindToken(l.buf[shift:], l.nextPos) != nil {
 				return UnknownTokenError{
 					Literal:  l.buf[:shift],
