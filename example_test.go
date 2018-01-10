@@ -2,7 +2,6 @@ package simplexer_test
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/macrat/simplexer"
@@ -90,11 +89,11 @@ func Example_addOriginalTokenType() {
 	input := "hello_world = \"hello world\"\nnumber = 1"
 	lexer := simplexer.NewLexer(strings.NewReader(input))
 
-	lexer.Whitespace = regexp.MustCompile(`^[\t ]`)
+	lexer.Whitespace = simplexer.NewRegexpTokenType(-1, `^[\t ]`)
 
 	lexer.TokenTypes = append([]simplexer.TokenType{
-		simplexer.NewTokenType(SUBSITUATION, `^=`),
-		simplexer.NewTokenType(NEWLINE, `^[\n\r]+`),
+		simplexer.NewRegexpTokenType(SUBSITUATION, `^=`),
+		simplexer.NewRegexpTokenType(NEWLINE, `^[\n\r]+`),
 	}, lexer.TokenTypes...)
 
 	fmt.Println(input)

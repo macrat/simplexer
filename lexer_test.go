@@ -26,8 +26,8 @@ func execute(t *testing.T, input string, wants []want) {
 			t.Fatalf("excepted token type=%s literal=%#v but got nil", except.TypeID, except.Literal)
 		}
 
-		if token.Type.ID != except.TypeID {
-			t.Errorf("excepted type %s but got %s", except.TypeID, token.Type.ID)
+		if token.Type.GetID() != except.TypeID {
+			t.Errorf("excepted type %s but got %s", except.TypeID, token.Type.GetID())
 		}
 		if token.Literal != except.Literal {
 			t.Errorf("excepted literal %#v but got %#v", except.Literal, token.Literal)
@@ -118,7 +118,7 @@ func TestLexer_oneLine(t *testing.T) {
 func TestLexer_reportingError(t *testing.T) {
 	lexer := simplexer.NewLexer(strings.NewReader("1 2 error 3 4"))
 	lexer.TokenTypes = []simplexer.TokenType{
-		simplexer.NewTokenType(0, `^[0-9]+`),
+		simplexer.NewRegexpTokenType(0, `^[0-9]+`),
 	}
 
 	if token, err := lexer.Scan(); err != nil {
@@ -160,7 +160,7 @@ func TestLexer_reportingError(t *testing.T) {
 func TestLexer_reportingError_withoutSpace(t *testing.T) {
 	lexer := simplexer.NewLexer(strings.NewReader("1 2 error3 4"))
 	lexer.TokenTypes = []simplexer.TokenType{
-		simplexer.NewTokenType(0, `^[0-9]+`),
+		simplexer.NewRegexpTokenType(0, `^[0-9]+`),
 	}
 
 	if token, err := lexer.Scan(); err != nil {
@@ -202,7 +202,7 @@ func TestLexer_reportingError_withoutSpace(t *testing.T) {
 func TestLexer_reportingError_atLast(t *testing.T) {
 	lexer := simplexer.NewLexer(strings.NewReader("12error"))
 	lexer.TokenTypes = []simplexer.TokenType{
-		simplexer.NewTokenType(0, `^[0-9]+`),
+		simplexer.NewRegexpTokenType(0, `^[0-9]+`),
 	}
 
 	if token, err := lexer.Scan(); err != nil {

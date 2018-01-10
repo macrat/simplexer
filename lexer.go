@@ -2,26 +2,25 @@ package simplexer
 
 import (
 	"io"
-	"regexp"
 	"strings"
 )
 
 // Defined default values for properties of Lexer as a package value.
 var (
-	DefaultWhitespace = regexp.MustCompile(`^(\s|\r|\n)+`)
+	DefaultWhitespace = NewRegexpTokenType(-1, `(?:\s|\r|\n)+`)
 
 	DefaultTokenTypes = []TokenType{
-		NewTokenType(IDENT, `^[a-zA-Z_][a-zA-Z0-9_]*`),
-		NewTokenType(NUMBER, `^[0-9]+(\.[0-9]+)?`),
-		NewTokenType(STRING, `^\"([^"]*)\"`),
-		NewTokenType(OTHER, `^.`),
+		NewRegexpTokenType(IDENT, `[a-zA-Z_][a-zA-Z0-9_]*`),
+		NewRegexpTokenType(NUMBER, `[0-9]+(?:\.[0-9]+)?`),
+		NewRegexpTokenType(STRING, `\"([^"]*)\"`),
+		NewRegexpTokenType(OTHER, `.`),
 	}
 )
 
 /*
 The lexical analyzer.
 
-Whitespace is a regular expression for skipping characters like whitespaces.
+Whitespace is a TokenType for skipping characters like whitespaces.
 The default value is simplexer.DefaultWhitespace.
 
 TokenTypes is an array of TokenType.
@@ -36,7 +35,7 @@ type Lexer struct {
 	buf        string
 	loadedLine string
 	nextPos    Position
-	Whitespace *regexp.Regexp
+	Whitespace TokenType
 	TokenTypes []TokenType
 }
 
@@ -59,38 +58,37 @@ func (l *Lexer) readBufIfNeed() {
 	}
 }
 
-/*
-Mathing buffer with a regular expression.
-
-Returns submatches.
-*/
-func (l *Lexer) Match(re *regexp.Regexp) []string {
-	l.readBufIfNeed()
-
-	if m := l.Whitespace.FindString(l.buf); m != "" {
-		l.consumeBuffer(m)
+func (l *Lexer) consumeBuffer(t *Token) {
+	if t == nil {
+		return
 	}
 
-	l.readBufIfNeed()
+	l.buf = l.buf[len(t.Literal):]
 
-	return re.FindStringSubmatch(l.buf)
+	l.nextPos = shiftPos(l.nextPos, t.Literal)
+
+	if idx := strings.LastIndex(t.Literal, "\n"); idx >= 0 {
+		l.loadedLine = t.Literal[idx+1:]
+	} else {
+		l.loadedLine += t.Literal
+	}
 }
 
-func (l *Lexer) consumeBuffer(s string) {
-	l.buf = l.buf[len(s):]
+func (l *Lexer) skipWhitespace() {
+	for true {
+		l.readBufIfNeed()
 
-	l.nextPos = shiftPos(l.nextPos, s)
-
-	if idx := strings.LastIndex(s, "\n"); idx >= 0 {
-		l.loadedLine = s[idx+1:]
-	} else {
-		l.loadedLine += s
+		if t := l.Whitespace.FindToken(l.buf, l.nextPos); t != nil {
+			l.consumeBuffer(t)
+		} else {
+			break
+		}
 	}
 }
 
 func (l *Lexer) makeError() error {
 	for i, _ := range l.buf {
-		if l.Whitespace.MatchString(l.buf[i:]) {
+		if l.Whitespace.FindToken(l.buf[i:], l.nextPos) != nil {
 			return UnknownTokenError{
 				Literal:  l.buf[:i],
 				Position: l.nextPos,
@@ -98,7 +96,7 @@ func (l *Lexer) makeError() error {
 		}
 
 		for _, tokenType := range l.TokenTypes {
-			if tokenType.Re.MatchString(l.buf[i:]) {
+			if tokenType.FindToken(l.buf[i:], l.nextPos) != nil {
 				return UnknownTokenError{
 					Literal:  l.buf[:i],
 					Position: l.nextPos,
@@ -120,13 +118,11 @@ Returns nil as *Token if the buffer is empty.
 */
 func (l *Lexer) Peek() (*Token, error) {
 	for _, tokenType := range l.TokenTypes {
-		if m := l.Match(tokenType.Re); len(m) > 0 {
-			return &Token{
-				Type:       &tokenType,
-				Literal:    m[0],
-				Submatches: m[1:],
-				Position:   l.nextPos,
-			}, nil
+		l.skipWhitespace()
+
+		l.readBufIfNeed()
+		if t := tokenType.FindToken(l.buf, l.nextPos); t != nil {
+			return t, nil
 		}
 	}
 
@@ -145,9 +141,7 @@ This function using Lexer.Peek. Please read document of Peek.
 func (l *Lexer) Scan() (*Token, error) {
 	t, e := l.Peek()
 
-	if t != nil {
-		l.consumeBuffer(t.Literal)
-	}
+	l.consumeBuffer(t)
 
 	return t, e
 }

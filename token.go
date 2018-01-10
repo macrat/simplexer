@@ -3,6 +3,7 @@ package simplexer
 import (
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 // TokenID is Identifier for TokenType.
@@ -36,44 +37,116 @@ func (id TokenID) String() string {
 	}
 }
 
-// Compare TokenID as int.
-func (id TokenID) Compare(another TokenID) int {
-	return int(id - another)
-}
-
 // TokenType is a rule for making Token.
-type TokenType struct {
-	ID TokenID
-	Re *regexp.Regexp // Regular expression for taking token. Must be starts with ^.
+type TokenType interface {
+	GetID() TokenID
+	FindToken(string, Position) *Token
 }
 
 /*
-Make new TokenType.
+RegexpTokenType is a TokenType implement with regexp.
 
-token: A TokenID of new TokenType.
+ID is TokenID for this token type.
 
-re: A regular expression of token. Must be starts with ^.
+Re is regular expression of token.
 */
-func NewTokenType(token TokenID, re string) TokenType {
-	return TokenType{
-		ID: token,
+type RegexpTokenType struct {
+	ID TokenID
+	Re *regexp.Regexp
+}
+
+/*
+Make new RegexpTokenType.
+
+id is a TokenID of new RegexpTokenType.
+
+re is a regular expression of token.
+*/
+func NewRegexpTokenType(id TokenID, re string) *RegexpTokenType {
+	if !strings.HasPrefix(re, "^") {
+		re = "^" + re
+	}
+	return &RegexpTokenType{
+		ID: id,
 		Re: regexp.MustCompile(re),
 	}
 }
 
 // Get readable string of TokenID.
-func (tt TokenType) String() string {
-	return tt.ID.String()
+func (rtt *RegexpTokenType) String() string {
+	return rtt.ID.String()
 }
 
-// Compare TokenType of ID.
-func (tt TokenType) Compare(another TokenType) int {
-	return tt.ID.Compare(another.ID)
+// GetID returns id of this token type.
+func (rtt *RegexpTokenType) GetID() TokenID {
+	return rtt.ID
+}
+
+// FindToken returns new Token if s starts with this token.
+func (rtt *RegexpTokenType) FindToken(s string, p Position) *Token {
+	m := rtt.Re.FindStringSubmatch(s)
+	if len(m) > 0 {
+		return &Token{
+			Type:       rtt,
+			Literal:    m[0],
+			Submatches: m[1:],
+			Position:   p,
+		}
+	}
+	return nil
+}
+
+/*
+PatternTokenType is dictionary token type.
+
+PatternTokenType has some strings and find token that perfect match they.
+*/
+type PatternTokenType struct {
+	ID       TokenID
+	Patterns []string
+}
+
+/*
+Make new PatternTokenType.
+
+id is a TokenID of new PatternTokenType.
+
+patterns is array of patterns.
+*/
+func NewPatternTokenType(id TokenID, patterns []string) *PatternTokenType {
+	return &PatternTokenType{
+		ID:       id,
+		Patterns: patterns,
+	}
+}
+
+// Get readable string of TokenID.
+func (ptt *PatternTokenType) String() string {
+	return ptt.ID.String()
+}
+
+// GetID returns id of token type.
+func (ptt *PatternTokenType) GetID() TokenID {
+	return ptt.ID
+}
+
+// FindToken returns new Token if s starts with this token.
+func (ptt *PatternTokenType) FindToken(s string, p Position) *Token {
+	for _, x := range ptt.Patterns {
+		if strings.HasPrefix(s, x) {
+			return &Token{
+				Type:     ptt,
+				Literal:  x,
+				Position: p,
+			}
+		}
+	}
+	return nil
 }
 
 // A data of found Token.
 type Token struct {
-	Type       *TokenType
+	Type       TokenType
 	Literal    string   // The string of matched.
 	Submatches []string // Submatches of regular expression.
 	Position   Position // Position of token.
