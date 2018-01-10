@@ -37,7 +37,15 @@ func (id TokenID) String() string {
 	}
 }
 
-// TokenType is a rule for making Token.
+/*
+TokenType is a rule for making Token.
+
+GetID returns TokenID of this TokenType.
+TokenID can share with another TokenType.
+
+FindToken returns new Token if the head of first argument was matched with the pattern of this TokenType.
+The second argument is a position of the token in the buffer. In almost implement, Position will pass into result Token directly.
+*/
 type TokenType interface {
 	GetID() TokenID
 	FindToken(string, Position) *Token
@@ -48,7 +56,7 @@ RegexpTokenType is a TokenType implement with regexp.
 
 ID is TokenID for this token type.
 
-Re is regular expression of token.
+Re is regular expression of token. It have to starts with "^".
 */
 type RegexpTokenType struct {
 	ID TokenID

@@ -89,10 +89,11 @@ func Example_addOriginalTokenType() {
 	input := "hello_world = \"hello world\"\nnumber = 1"
 	lexer := simplexer.NewLexer(strings.NewReader(input))
 
-	lexer.Whitespace = simplexer.NewRegexpTokenType(-1, `^[\t ]`)
+	lexer.Whitespace = simplexer.NewPatternTokenType(-1, []string{"\t", " "})
+	// lexer.Whitespace = simplexer.NewRegexpTokenType(-1, `[\t ]`)  // same mean above
 
 	lexer.TokenTypes = append([]simplexer.TokenType{
-		simplexer.NewRegexpTokenType(SUBSITUATION, `^=`),
+		simplexer.NewPatternTokenType(SUBSITUATION, []string{"="}),
 		simplexer.NewRegexpTokenType(NEWLINE, `^[\n\r]+`),
 	}, lexer.TokenTypes...)
 
